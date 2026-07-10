@@ -1,0 +1,59 @@
+name: Salesforce Pull Request Validation
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  static-analysis-and-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Download your branch code onto GitHub's cloud machine
+      - name: 'Checkout Source Code'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Step 2: Set up Node.js runtime environment
+      - name: 'Setup Node.js Environment'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Step 3: Install Salesforce CLI globally on the cloud server
+      - name: 'Install Salesforce CLI'
+        run: |
+          npm install -g @salesforce/cli
+          sf --version
+
+      # Step 4: Install the Salesforce Code Analyzer plugin
+      - name: 'Install Salesforce Scanner Plugin (PMD)'
+        run: |
+          sf plugins install @salesforce/sfdx-scanner
+
+      # Step 5: Run PMD scan and write results directly to an HTML report file
+      - name: 'Run PMD Code Scan with Reporting'
+        run: |
+          sf scanner run --target "force-app/main/default/classes" --engine "pmd" --format html --outfile "pmd-report.html" --severity 3
+
+      # Step 6: Capture and attach the HTML report as a downloadable artifact
+      - name: 'Upload PMD Quality Report File'
+        if: always() 
+        uses: actions/upload-artifact@v4
+        with:
+          name: Salesforce-PMD-Quality-Report
+          path: pmd-report.html
+          retention-days: 7
+
+      # Step 7: Authenticate to your Salesforce Org using your hidden secret
+      - name: 'Authenticate to Salesforce Org'
+        run: |
+          echo "${{ secrets.SFDX_AUTH_URL }}" > sfdx_auth.txt
+          sf org login auth sfdx-url-file --sfdx-url-file sfdx_auth.txt --set-default
+          rm sfdx_auth.txt
+
+      # Step 8: Perform a validation deployment check and run unit tests
+      - name: 'Validate Deployment & Run Apex Unit Tests'
+        run: |
+          sf project deploy validate --source-dir force-app --test-level RunLocalTests
