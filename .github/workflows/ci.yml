@@ -19,7 +19,7 @@ jobs:
       - name: 'Setup Node.js Environment'
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       # Step 3: Install Salesforce CLI globally on the cloud server
       - name: 'Install Salesforce CLI'
