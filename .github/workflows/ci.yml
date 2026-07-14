@@ -35,7 +35,7 @@ jobs:
       # Step 5: Run PMD scan and write results directly to an HTML report file
       - name: 'Run PMD Code Scan with Reporting'
         run: |
-          sf scanner run --target "force-app/main/default/classes" --engine "pmd" --format html --outfile "pmd-report.html" --severity 3
+          sf scanner run --target "force-app/main/default/classes" --engine "pmd" --format html --outfile "pmd-report.html" --severity-threshold 3
 
       # Step 6: Capture and attach the HTML report as a downloadable artifact
       - name: 'Upload PMD Quality Report File'
